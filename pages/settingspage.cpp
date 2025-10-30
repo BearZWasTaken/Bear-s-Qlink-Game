@@ -104,13 +104,15 @@ SettingsPage::SettingsPage(QWidget *parent, TextureLoader *textureLoader)
     p1Btn->setStyleSheet(btnStyle);
     p2Btn->setStyleSheet(btnStyle);
     p1Btn->setChecked(true);
-    connect(p1Btn, &QPushButton::clicked, this, [p1Btn, p2Btn]() {
+    connect(p1Btn, &QPushButton::clicked, this, [this, p1Btn, p2Btn]() {
         p1Btn->setChecked(true);
         p2Btn->setChecked(false);
+        settings.player_cnt = 1;
     });
-    connect(p2Btn, &QPushButton::clicked, this, [p1Btn, p2Btn]() {
+    connect(p2Btn, &QPushButton::clicked, this, [this, p1Btn, p2Btn]() {
         p2Btn->setChecked(true);
         p1Btn->setChecked(false);
+        settings.player_cnt = 2;
     });
     playerLayout->addWidget(p1Btn);
     playerLayout->addWidget(p2Btn);
@@ -221,7 +223,7 @@ SettingsPage::SettingsPage(QWidget *parent, TextureLoader *textureLoader)
         settings.theme_name = themeName;
     });
     connect(doneBtn, &QPushButton::clicked, this, [this]() {
-        emit SettingsDone(settings);
+        emit SettingsDoneSignal(settings);
     });
 }
 

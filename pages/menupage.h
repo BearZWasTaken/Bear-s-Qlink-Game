@@ -27,9 +27,9 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 signals:
-    void NewGame();
-    void LoadGame();
-    void ExitGame();
+    void NewGameSignal();
+    void LoadGameSignal();
+    void ExitGameSignal();
 };
 
 #endif // MENUPAGE_H

@@ -74,11 +74,11 @@ MenuPage::MenuPage(QWidget *parent)
     layout->addWidget(exitGameBtn, 0, Qt::AlignCenter);
 
     connect(newGameBtn, &QPushButton::clicked, this, [this]() {
-        emit NewGame();
+        emit NewGameSignal();
     });
 
     connect(loadGameBtn, &QPushButton::clicked, this, [this]() {
-        emit LoadGame();
+        emit LoadGameSignal();
     });
 
     connect(exitGameBtn, &QPushButton::clicked, this, [this]() {
@@ -92,7 +92,7 @@ MenuPage::MenuPage(QWidget *parent)
         }
         else
         {
-            emit ExitGame();
+            emit ExitGameSignal();
         }
     });
 }

@@ -22,28 +22,53 @@ MainWindow::MainWindow(QWidget *parent)
     settingsPage = new SettingsPage(this, textureLoader);
     stacked_widget->addWidget(settingsPage);
 
-    gamePage = new GamePage(this, textureLoader);
-    stacked_widget->addWidget(gamePage);
+    onePlayerGamePage = new OnePlayerGamePage(this, textureLoader);
+    stacked_widget->addWidget(onePlayerGamePage);
 
-    connect(menuPage, &MenuPage::NewGame, this, [this]() {
+    twoPlayersGamePage = new TwoPlayersGamePage(this, textureLoader);
+    stacked_widget->addWidget(twoPlayersGamePage);
+
+    selectMapPage = new SelectMapPage(this, textureLoader);
+    stacked_widget->addWidget(selectMapPage);
+
+    connect(menuPage, &MenuPage::NewGameSignal, this, [this]() {
         stacked_widget->setCurrentWidget(settingsPage);
-        qDebug() << "Switch to settings page.";
     });
 
-    connect(menuPage, &MenuPage::ExitGame, this, [this]() {
+    connect(menuPage, &MenuPage::LoadGameSignal, this, [this]() {
+        selectMapPage->LoadMapList();
+        stacked_widget->setCurrentWidget(selectMapPage);
+    });
+
+    connect(menuPage, &MenuPage::ExitGameSignal, this, []() {
         QApplication::quit();
     });
 
-    connect(settingsPage, &SettingsPage::SettingsDone, this, [this](const GameSettings &settings) {
-        stacked_widget->setCurrentWidget(gamePage);
-        gamePage->NewGame(settings);
-        qDebug() << "Switch to game page.";
+    connect(settingsPage, &SettingsPage::SettingsDoneSignal, this, [this](const GameSettings &settings) {
+        if (settings.player_cnt == 1)
+        {
+            stacked_widget->setCurrentWidget(onePlayerGamePage);
+            onePlayerGamePage->NewGame(settings);
+        }
+        else
+        {
+            stacked_widget->setCurrentWidget(twoPlayersGamePage);
+            twoPlayersGamePage->NewGame(settings);
+        }
     });
 
-    connect(gamePage, &GamePage::ReturnToMenu, this, [this]() {
+    connect(onePlayerGamePage, &OnePlayerGamePage::ReturnToMenuSignal, this, [this]() {
         menuPage->Reset();
         stacked_widget->setCurrentWidget(menuPage);
-        qDebug() << "Switch to menu page.";
+    });
+
+    connect(selectMapPage, &SelectMapPage::BackToMenuSignal, this, [this]() {
+        stacked_widget->setCurrentWidget(menuPage);
+    });
+
+    connect(selectMapPage, &SelectMapPage::LoadMapSignal, this, [this](const QString &mapName) {
+        stacked_widget->setCurrentWidget(onePlayerGamePage);
+        onePlayerGamePage->LoadGame(mapName);
     });
 
     stacked_widget->setCurrentWidget(menuPage);

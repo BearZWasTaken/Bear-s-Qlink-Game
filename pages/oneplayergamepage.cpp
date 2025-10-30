@@ -1,4 +1,4 @@
-#include "gamepage.h"
+#include "oneplayergamepage.h"
 
 #include "gamesettings.h"
 #include "gameboard.h"
@@ -13,7 +13,7 @@
 #include <QPropertyAnimation>
 #include <QGraphicsOpacityEffect>
 
-GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
+OnePlayerGamePage::OnePlayerGamePage(QWidget *parent, TextureLoader *textureLoader)
     : QWidget(parent), textureLoader(textureLoader)
 {
     setFocusPolicy(Qt::StrongFocus);
@@ -43,9 +43,9 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
     timeLeftLabel->setAlignment(Qt::AlignCenter);
     topLayout->addWidget(timeLeftLabel, 1);
 
-    exitBtn = new QPushButton("Exit", topBar);
-    exitBtn->setFixedSize(80, 30);
-    exitBtn->setStyleSheet(
+    pauseBtn = new QPushButton("Pause⏸️", topBar);
+    pauseBtn->setFixedSize(80, 30);
+    pauseBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: #FF6B9E;"
         "   color: white;"
@@ -60,9 +60,9 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
         "   background-color: #E55A8A;"
         "}"
         );
-    topLayout->addWidget(exitBtn);
+    topLayout->addWidget(pauseBtn);
 
-    connect(exitBtn, &QPushButton::clicked, this, &GamePage::Exit);
+    connect(pauseBtn, &QPushButton::clicked, this, &OnePlayerGamePage::Pause);
 
     mainLayout->addWidget(topBar);
 
@@ -82,7 +82,7 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
     //// Timer ////
 
     timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &GamePage::UpdateTimer);
+    connect(timer, &QTimer::timeout, this, &OnePlayerGamePage::UpdateTimer);
 
 
     //// "Game Over" Overlay ////
@@ -136,7 +136,7 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
     )");
     gameOverOverlayLayout->addWidget(returnToMenuBtn, 0, Qt::AlignCenter);
 
-    connect(returnToMenuBtn, &QPushButton::clicked, this, &GamePage::Exit);
+    connect(returnToMenuBtn, &QPushButton::clicked, this, &OnePlayerGamePage::Exit);
 
 
     //// "Pause" Overlay ////
@@ -179,6 +179,7 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
         }
     )");
     pauseOverlayLayout->addWidget(resumeBtn, 0, Qt::AlignCenter);
+    connect(resumeBtn, &QPushButton::clicked, this, &OnePlayerGamePage::Resume);
 
     saveAndExitBtn = new QPushButton("Save && Exit", pauseOverlay);
     saveAndExitBtn->setFixedSize(200, 50);
@@ -198,8 +199,27 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
         }
     )");
     pauseOverlayLayout->addWidget(saveAndExitBtn, 0, Qt::AlignCenter);
+    connect(saveAndExitBtn, &QPushButton::clicked, this, &OnePlayerGamePage::SaveAndExit);
 
-    connect(saveAndExitBtn, &QPushButton::clicked, this, &GamePage::SaveAndExit);
+    discardAndExitBtn = new QPushButton("Discard && Exit", pauseOverlay);
+    discardAndExitBtn->setFixedSize(200, 50);
+    discardAndExitBtn->setStyleSheet(R"(
+        QPushButton {
+            background-color: #FF6B9E;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font: bold 18pt "Comic Sans MS", Arial, sans-serif;
+        }
+        QPushButton:hover {
+            background-color: #FF8AB5;
+        }
+        QPushButton:pressed {
+            background-color: #E55A8A;
+        }
+    )");
+    pauseOverlayLayout->addWidget(discardAndExitBtn, 0, Qt::AlignCenter);
+    connect(discardAndExitBtn, &QPushButton::clicked, this, &OnePlayerGamePage::Exit);
 
 
     //// "Enter Map Name" Overlay ////
@@ -271,7 +291,7 @@ GamePage::GamePage(QWidget *parent, TextureLoader *textureLoader)
 
 }
 
-GamePage::~GamePage()
+OnePlayerGamePage::~OnePlayerGamePage()
 {
     if (board)
     {
@@ -280,7 +300,7 @@ GamePage::~GamePage()
     }
 }
 
-void GamePage::NewGame(const GameSettings &settings)
+void OnePlayerGamePage::NewGame(const GameSettings &settings)
 {
     setFocusPolicy(Qt::StrongFocus);
     setFocus();
@@ -291,21 +311,44 @@ void GamePage::NewGame(const GameSettings &settings)
         board = nullptr;
     }
     board = new GameBoard(this);
-    connect(board, &GameBoard::LinkSuccess, this, [this](const std::vector<Coord> &path) {
+
+    connect(board, &GameBoard::LinkSuccessSignal, this, [this](const std::vector<Coord> &path) {
         this->DrawPath(path);
         this->UpdateBlocksLeft();
         qDebug() << "Link success.";
     });
-    connect(board, &GameBoard::GameOver, this, &GamePage::ShowGameOverOverlay);
+    connect(board, &GameBoard::GameOverSignal, this, &OnePlayerGamePage::ShowGameOverOverlay);
 
     board->NewGame(settings);
-    timer->start(100);
-    UpdateBlocksLeft();
-    UpdateTimeLeft();
     LoadAll();
+    timer->start(100);
 }
 
-void GamePage::resizeEvent(QResizeEvent *event)
+void OnePlayerGamePage::LoadGame(const QString &mapName)
+{
+    setFocusPolicy(Qt::StrongFocus);
+    setFocus();
+
+    if (board)
+    {
+        delete board;
+        board = nullptr;
+    }
+    board = new GameBoard(this);
+
+    connect(board, &GameBoard::LinkSuccessSignal, this, [this](const std::vector<Coord> &path) {
+        this->DrawPath(path);
+        this->UpdateBlocksLeft();
+        qDebug() << "Link success.";
+    });
+    connect(board, &GameBoard::GameOverSignal, this, &OnePlayerGamePage::ShowGameOverOverlay);
+
+    board->LoadMap(mapName);
+    LoadAll();
+    timer->start(100);
+}
+
+void OnePlayerGamePage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     if (scene->sceneRect().isValid())
@@ -314,7 +357,7 @@ void GamePage::resizeEvent(QResizeEvent *event)
     }
 }
 
-void GamePage::keyPressEvent(QKeyEvent *event)
+void OnePlayerGamePage::keyPressEvent(QKeyEvent *event)
 {
     Player *player = board->player;
 
@@ -348,14 +391,16 @@ void GamePage::keyPressEvent(QKeyEvent *event)
     LoadAll();
 }
 
-void GamePage::LoadAll()
+void OnePlayerGamePage::LoadAll()
 {
     LoadBoard();
     LoadPlayer();
     LoadMisc();
+    UpdateBlocksLeft();
+    UpdateTimeLeft();
 }
 
-void GamePage::LoadBoard()
+void OnePlayerGamePage::LoadBoard()
 {
     QList<QGraphicsItem*> itemsToRemove;
     for (QGraphicsItem* item : scene->items())
@@ -420,7 +465,7 @@ void GamePage::LoadBoard()
     view->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
 }
 
-void GamePage::LoadPlayer()
+void OnePlayerGamePage::LoadPlayer()
 {
     Player *player = board->player;
     QPixmap scaledPixmap = textureLoader->players[2].texture[player->direction][player->appearance_index].scaled(
@@ -433,7 +478,7 @@ void GamePage::LoadPlayer()
     item->setPos((player->x-1) * (cellSize + spacing), (player->y-1) * (cellSize + spacing));
 }
 
-void GamePage::LoadMisc()
+void OnePlayerGamePage::LoadMisc()
 {
     Player *player = board->player;
     if (player->select1_x)
@@ -470,7 +515,7 @@ void GamePage::LoadMisc()
     }
 }
 
-void GamePage::DrawPath(const std::vector<Coord> &path)
+void OnePlayerGamePage::DrawPath(const std::vector<Coord> &path)
 {
     if (path.empty()) return;
 
@@ -502,7 +547,7 @@ void GamePage::DrawPath(const std::vector<Coord> &path)
     StartFadeAnimation();
 }
 
-void GamePage::ClearPath()
+void OnePlayerGamePage::ClearPath()
 {
     if (!pathItem) return;
 
@@ -511,7 +556,7 @@ void GamePage::ClearPath()
     pathItem = nullptr;
 }
 
-void GamePage::StartFadeAnimation()
+void OnePlayerGamePage::StartFadeAnimation()
 {
     if (!pathItem) return;
 
@@ -531,12 +576,12 @@ void GamePage::StartFadeAnimation()
     fadeAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void GamePage::UpdateBlocksLeft()
+void OnePlayerGamePage::UpdateBlocksLeft()
 {
     blocksLeftLabel->setText(QString("Blocks Left: %1").arg(board->remaining_blocks));
 }
 
-void GamePage::UpdateTimer()
+void OnePlayerGamePage::UpdateTimer()
 {
     if (board->timeLeftMs > 0)
     {
@@ -553,7 +598,7 @@ void GamePage::UpdateTimer()
     }
 }
 
-void GamePage::UpdateTimeLeft()
+void OnePlayerGamePage::UpdateTimeLeft()
 {
     int minute = board->timeLeftMs / 60000;
     int second = board->timeLeftMs % 60000 / 1000;
@@ -564,7 +609,7 @@ void GamePage::UpdateTimeLeft()
                                .arg(one_tenth_second, 1, 10, QLatin1Char('0')));
 }
 
-void GamePage::ShowGameOverOverlay(bool win, QString info)
+void OnePlayerGamePage::ShowGameOverOverlay(bool win, QString info)
 {
     timer->stop();
 
@@ -580,29 +625,40 @@ void GamePage::ShowGameOverOverlay(bool win, QString info)
     gameOverOverlay->setVisible(true);
 }
 
-void GamePage::Pause()
+void OnePlayerGamePage::Pause()
 {
     timer->stop();
+    board->Pause();
     pauseOverlay->setVisible(true);
     pauseOverlay->setGeometry(0, 0, width(), height());
 }
 
-void GamePage::SaveAndExit()
+void OnePlayerGamePage::Resume()
+{
+    timer->start();
+    board->Resume();
+    pauseOverlay->setVisible(false);
+}
+
+void OnePlayerGamePage::SaveAndExit()
 {
     pauseOverlay->setVisible(false);
     enterMapNameOverlay->setVisible(true);
     enterMapNameOverlay->setGeometry(0, 0, width(), height());
 }
 
-void GamePage::SaveMap(QString mapName)
+void OnePlayerGamePage::SaveMap(QString mapName)
 {
     pauseOverlay->setVisible(false);
+    enterMapNameOverlay->setVisible(false);
+    gameOverOverlay->setVisible(false);
     board->SaveMap(mapName);
-    emit ReturnToMenu();
+    emit ReturnToMenuSignal();
 }
 
-void GamePage::Exit()
+void OnePlayerGamePage::Exit()
 {
+    pauseOverlay->setVisible(false);
     gameOverOverlay->setVisible(false);
-    emit ReturnToMenu();
+    emit ReturnToMenuSignal();
 }

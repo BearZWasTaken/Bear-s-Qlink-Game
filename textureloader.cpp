@@ -1,37 +1,17 @@
 #include "textureloader.h"
 
 #include "gamesettings.h"
+#include "filestreamer.h"
 
 TextureLoader::TextureLoader() {}
 
 void TextureLoader::LoadAll()
 {
-    QString imagesDir = findImagesDir();
+    QString imagesDir = FileStreamer::FindDir("images");
     LoadThemes(imagesDir + "/blocks");
     LoadPlayers(imagesDir + "/players");
     LoadProps(imagesDir + "/props");
     LoadMisc(imagesDir + "/misc");
-}
-
-QString TextureLoader::findImagesDir()
-{
-    QStringList candidates;
-    candidates << "./images"
-               << "../images"
-               << "../../images";
-
-    for (const QString &path : candidates)
-    {
-        QDir dir(path);
-        if (dir.exists())
-        {
-            qDebug() << "Found images directory:" << dir.absolutePath();
-            return dir.absolutePath();
-        }
-    }
-
-    qWarning() << "Cannot find images directory in any candidate path!";
-    return QString();
 }
 
 void TextureLoader::LoadBlocks(const QString &dirPath, std::vector<QPixmap> &pixmap)

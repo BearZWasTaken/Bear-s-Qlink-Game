@@ -1,6 +1,7 @@
 #include "gameboard.h"
 
 #include "player.h"
+#include "filestreamer.h"
 
 #include <QDebug>
 #include <QJsonObject>
@@ -46,7 +47,7 @@ void GameBoard::NewGame(const GameSettings &s)
 
 void GameBoard::SaveMap(QString mapName)
 {
-    QString mapsDir = findMapsDir();
+    QString mapsDir = FileStreamer::FindDir("maps");
     if (mapsDir == QString()) return;
 
     QJsonObject jsonObject;
@@ -65,48 +66,65 @@ void GameBoard::SaveMap(QString mapName)
     }
     jsonObject.insert("board", boardArr);
 
+    jsonObject.insert("board_width", (int)board_width);
+    jsonObject.insert("board_height", (int)board_height);
+    jsonObject.insert("theme_name", settings.theme_name);
+    jsonObject.insert("remaining_blocks", remaining_blocks);
+
+    jsonObject.insert("player_x", player->x);
+    jsonObject.insert("player_y", player->y);
+    jsonObject.insert("select1_x", player->select1_x);
+    jsonObject.insert("select1_y", player->select1_y);
+
+    jsonObject.insert("timeLeftMs", timeLeftMs);
+    jsonObject.insert("hintTimeLeftMs", hintTimeLeftMs);
+
     QString mapPath = mapsDir + "/" + mapName + ".json";
     QFileInfo fileInfo(mapPath);
-    if (fileInfo.exists())
+    int num = 1;
+    while (fileInfo.exists())
     {
-        int num = 1;
         mapPath = mapsDir + "/" + mapName + " (" + QString::number(num) + ").json";
         fileInfo = QFileInfo(mapPath);
+        num++;
     }
 
-    QFile file(mapPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-    {
-        qDebug() << "Cannot open json file:" << mapPath;
-        return;
-    }
-    QTextStream stream(&file);
-
-    QJsonDocument jsonDocument;
-    jsonDocument.setObject(jsonObject);
-    stream << jsonDocument.toJson();
-    file.close();
+    FileStreamer::WriteJsonObject(mapPath, jsonObject);
 }
 
-QString GameBoard::findMapsDir()
+void GameBoard::LoadMap(QString mapName)
 {
-    QStringList candidates;
-    candidates << "./maps"
-               << "../maps"
-               << "../../maps";
+    QString mapPath = FileStreamer::FindDir("maps") + "/" + mapName + ".json";
+    QJsonObject jsonObject = FileStreamer::ReadJsonObject(mapPath);
+    if (jsonObject.empty()) return;
 
-    for (const QString &path : candidates)
+    board_width = jsonObject["board_width"].toInt();
+    board_height = jsonObject["board_height"].toInt();
+    remaining_blocks = jsonObject["remaining_blocks"].toInt();
+
+    settings.theme_name = jsonObject["theme_name"].toString();
+
+    player->x = jsonObject["player_x"].toInt();
+    player->y = jsonObject["player_y"].toInt();
+    player->select1_x = jsonObject["select1_x"].toInt();
+    player->select1_y = jsonObject["select1_y"].toInt();
+
+    timeLeftMs = jsonObject["timeLeftMs"].toInt();
+    hintTimeLeftMs = jsonObject["hintTimeLeftMs"].toInt();
+
+    QJsonArray boardArr = jsonObject["board"].toArray();
+    for (int i=1; i<=board_height; i++)
     {
-        QDir dir(path);
-        if (dir.exists())
+        QJsonArray rowArr = boardArr[i-1].toArray();
+        for (int j=1; j<=board_width; j++)
         {
-            qDebug() << "Found maps directory:" << dir.absolutePath();
-            return dir.absolutePath();
+            QJsonArray cellArr = rowArr[j-1].toArray();
+            cells[i][j].blockType = cellArr[0].toInt();
+            cells[i][j].propType = cellArr[1].toInt();
         }
     }
 
-    qWarning() << "Cannot find maps directory in any candidate path!";
-    return QString();
+    qDebug() << "Map loaded successfully:" << mapPath;
 }
 
 void GameBoard::SpawnPlayer()
@@ -250,7 +268,8 @@ void GameBoard::TryLink(const int x1, const int y1, const int x2, const int y2)
         cells[x1][y1].blockType = 0;
         cells[x2][y2].blockType = 0;
         remaining_blocks -= 2;
-        emit LinkSuccess(shortest_path);
+        emit LinkSuccessSignal(shortest_path);
+        qDebug() << "Linked!";
 
         if (remaining_blocks == 0)
         {
@@ -258,8 +277,6 @@ void GameBoard::TryLink(const int x1, const int y1, const int x2, const int y2)
         }
 
         RefreshHint();
-
-        ///// check: no move avail
     }
 }
 
@@ -473,16 +490,26 @@ bool GameBoard::isPlaying()
     return playing;
 }
 
+void GameBoard::Pause()
+{
+    playing = false;
+}
+
+void GameBoard::Resume()
+{
+    playing = true;
+}
+
 void GameBoard::GameWin()
 {
     playing = false;
-    emit GameOver(true, "Congrats! 👏");
+    emit GameOverSignal(true, "Congrats! 👏");
     qDebug() << "WinWinWin";
 }
 
 void GameBoard::GameLose(QString info)
 {
     playing = false;
-    emit GameOver(false, info);
+    emit GameOverSignal(false, info);
     qDebug() << "Lose. fvv! Info:" << info;
 }

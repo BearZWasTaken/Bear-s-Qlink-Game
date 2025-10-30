@@ -7,7 +7,9 @@
 
 #include "menupage.h"
 #include "settingspage.h"
-#include "gamepage.h"
+#include "oneplayergamepage.h"
+#include "twoplayersgamepage.h"
+#include "selectmappage.h"
 
 class MainWindow : public QMainWindow
 {
@@ -24,7 +26,9 @@ private:
 
     MenuPage *menuPage;
     SettingsPage *settingsPage;
-    GamePage *gamePage;
+    OnePlayerGamePage *onePlayerGamePage;
+    TwoPlayersGamePage *twoPlayersGamePage;
+    SelectMapPage *selectMapPage;
 
     QString findImagesDir();
 };

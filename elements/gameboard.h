@@ -53,8 +53,7 @@ public:
 
     void NewGame(const GameSettings &settings);
     void SaveMap(QString mapName);
-    void LoadMap(QString mapName, const QString filePath);
-    QString findMapsDir();
+    void LoadMap(QString mapName);
 
     bool hasBlock(const int x, const int y);
     bool hasBlock(const Coord coord);
@@ -65,6 +64,8 @@ public:
     void TriggerProp(const int x, const int y);
 
     bool isPlaying();
+    void Pause();
+    void Resume();
     void GameWin();
     void GameLose(QString info);
 
@@ -84,8 +85,8 @@ private:
     bool isHintInvalid(LinkHint &hint);
 
 signals:
-    void LinkSuccess(const std::vector<Coord> &path);
-    void GameOver(bool win, QString info);
+    void LinkSuccessSignal(const std::vector<Coord> &path);
+    void GameOverSignal(bool win, QString info);
 };
 
 #endif // GAMEBOARD_H

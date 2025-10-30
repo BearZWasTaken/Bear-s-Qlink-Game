@@ -15,15 +15,16 @@ class GameBoard;
 class TextureLoader;
 struct Coord;
 
-class GamePage : public QWidget
+class OnePlayerGamePage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit GamePage(QWidget *parent, TextureLoader *textureLoader);
-    ~GamePage();
+    explicit OnePlayerGamePage(QWidget *parent, TextureLoader *textureLoader);
+    ~OnePlayerGamePage();
 
     void NewGame(const GameSettings &settings);
+    void LoadGame(const QString &mapName);
 
 private:
     GameBoard *board = nullptr;
@@ -34,12 +35,11 @@ private:
 
     QGraphicsScene *scene;
     QGraphicsView *view;
-
     QGraphicsPathItem *pathItem;
 
     QLabel *blocksLeftLabel;
     QLabel *timeLeftLabel;
-    QPushButton *exitBtn;
+    QPushButton *pauseBtn;
 
     QTimer *timer;
 
@@ -52,6 +52,7 @@ private:
     QLabel *pauseLabel;
     QPushButton *resumeBtn;
     QPushButton *saveAndExitBtn;
+    QPushButton *discardAndExitBtn;
 
     QWidget *enterMapNameOverlay;
     QLabel *enterMapNameLabel;
@@ -80,10 +81,12 @@ private:
     void ShowGameOverOverlay(bool win, QString info);
 
     void Pause();
+    void Resume();
     void SaveAndExit();
     void SaveMap(QString mapName);
     void Exit();
 
 signals:
-    void ReturnToMenu();
+    void GameOverSignal(bool win, QString info);
+    void ReturnToMenuSignal();
 };

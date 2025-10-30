@@ -25,7 +25,6 @@ class TextureLoader
 public:
     TextureLoader();
     void LoadAll();
-    QString findImagesDir();
     void LoadBlocks(const QString &dirPath, std::vector<QPixmap> &pixmap);
     void LoadThemes(const QString &rootPath);
     void LoadPlayers(const QString &dirPath);

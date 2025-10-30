@@ -29,5 +29,5 @@ private:
     double phase = 0.0;
 
 signals:
-    void SettingsDone(GameSettings settings);
+    void SettingsDoneSignal(GameSettings settings);
 };
