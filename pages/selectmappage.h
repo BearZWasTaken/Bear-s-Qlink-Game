@@ -36,6 +36,7 @@ private:
     QTableWidget *mapTable;
     QPushButton *backBtn;
     QPushButton *loadBtn;
+    QPushButton *deleteBtn;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -46,6 +47,7 @@ public:
     void LoadMapList();
     void BackToMenu();
     void LoadMap(const QString mapName, const int player_cnt);
+    void DeleteMap();
 
 private:
     void PopulateMapTable();

@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QPainter>
 #include <QDir>
+#include <QMessageBox>
 
 SelectMapPage::SelectMapPage(QWidget *parent, TextureLoader *textureLoader)
     : QWidget(parent), textureLoader(textureLoader)
@@ -97,7 +98,7 @@ SelectMapPage::SelectMapPage(QWidget *parent, TextureLoader *textureLoader)
             color: white;
             background-color: rgba(0,0,0,0.5);
             border-radius: 15px;
-            font: 20pt "Comic Sans MS";
+            font: 18pt "Comic Sans MS";
             padding: 12px 30px;
             min-width: 200px;
         }
@@ -121,9 +122,13 @@ SelectMapPage::SelectMapPage(QWidget *parent, TextureLoader *textureLoader)
     loadBtn->setEnabled(false);
     loadBtn->setStyleSheet(btnStyle);
 
+    deleteBtn = new QPushButton("🗑️ Delete Map");
+    deleteBtn->setStyleSheet(btnStyle);
+
     buttonLayout->addWidget(backBtn);
     buttonLayout->addStretch();
     buttonLayout->addWidget(loadBtn);
+    buttonLayout->addWidget(deleteBtn);
 
     mainLayout->addLayout(buttonLayout);
 
@@ -137,6 +142,8 @@ SelectMapPage::SelectMapPage(QWidget *parent, TextureLoader *textureLoader)
             this->LoadMap(mapName, mapOptions[currentRow].player_cnt);
         }
     });
+
+    connect(deleteBtn, &QPushButton::clicked, this, &SelectMapPage::DeleteMap);
 
     connect(mapTable, &QTableWidget::itemSelectionChanged, this, [this]() {
         loadBtn->setEnabled(mapTable->currentRow() >= 0);
@@ -233,4 +240,49 @@ void SelectMapPage::BackToMenu()
 void SelectMapPage::LoadMap(const QString mapName, const int player_cnt)
 {
     emit LoadMapSignal(mapName, player_cnt);
+}
+
+void SelectMapPage::DeleteMap()
+{
+    int currentRow = mapTable->currentRow();
+
+    const MapOption &selectedMap = mapOptions[currentRow];
+    QString mapName = selectedMap.name;
+
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Confirm Delete",
+                                  QString("Are you sure you want to delete map '%1'?\nThis action cannot be undone.").arg(mapName),
+                                  QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes)
+    {
+        QString mapsDir = FileStreamer::FindDir("maps");
+        QString filePath = mapsDir + "/" + mapName + ".json";
+
+        QFile mapFile(filePath);
+        if (mapFile.exists())
+        {
+            if (mapFile.remove())
+            {
+                QMessageBox::information(this, "Success", QString("Map '%1' has been deleted.").arg(mapName));
+
+                mapOptions.erase(mapOptions.begin() + currentRow);
+                PopulateMapTable();
+
+                if (mapOptions.empty())
+                {
+                    loadBtn->setEnabled(false);
+                    deleteBtn->setEnabled(false);
+                }
+            }
+            else
+            {
+                QMessageBox::critical(this, "Error", QString("Failed to delete map file: %1").arg(mapFile.errorString()));
+            }
+        }
+        else
+        {
+            QMessageBox::warning(this, "Not Found", QString("Map file not found: %1").arg(filePath));
+        }
+    }
 }
