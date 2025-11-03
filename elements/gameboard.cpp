@@ -50,10 +50,10 @@ QJsonObject GameBoard::SaveMap(QString mapName)
 {
     QJsonObject jsonObject;
     QJsonArray boardArr;
-    for (int i=1; i<=board_height; i++)
+    for (int j=1; j<=board_height; j++)
     {
         QJsonArray rowArr;
-        for (int j=1; j<=board_width; j++)
+        for (int i=1; i<=board_width; i++)
         {
             QJsonArray cellArr;
             cellArr.append(cells[i][j].blockType);
@@ -82,7 +82,7 @@ QJsonObject GameBoard::SaveMap(QString mapName)
     return jsonObject;
 }
 
-void GameBoard::LoadMap(const QJsonObject jsonObject)
+void GameBoard::LoadMap(const QJsonObject &jsonObject)
 {
     if (jsonObject.empty()) return;
 
@@ -103,12 +103,12 @@ void GameBoard::LoadMap(const QJsonObject jsonObject)
     dizzyTimeLeftMs = jsonObject["dizzyTimeLeftMs"].toInt();
 
     QJsonArray boardArr = jsonObject["board"].toArray();
-    for (int i=1; i<=board_height; i++)
+    for (int j=1; j<=board_height; j++)
     {
-        QJsonArray rowArr = boardArr[i-1].toArray();
-        for (int j=1; j<=board_width; j++)
+        QJsonArray rowArr = boardArr[j-1].toArray();
+        for (int i=1; i<=board_width; i++)
         {
-            QJsonArray cellArr = rowArr[j-1].toArray();
+            QJsonArray cellArr = rowArr[i-1].toArray();
             cells[i][j].blockType = cellArr[0].toInt();
             cells[i][j].propType = cellArr[1].toInt();
         }

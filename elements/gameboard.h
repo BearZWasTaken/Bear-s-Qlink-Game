@@ -57,7 +57,7 @@ public:
 
     void NewGame(const GameSettings &settings);
     QJsonObject SaveMap(QString mapName);
-    void LoadMap(const QJsonObject jsonObject);
+    void LoadMap(const QJsonObject &jsonObject);
 
     bool hasBlock(const int x, const int y);
     bool hasBlock(const Coord coord);
