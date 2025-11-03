@@ -37,6 +37,8 @@ public:
     QPixmap props[6];
     QPixmap selectTexture;
     QPixmap hintSignTexture;
+    QPixmap freezeEffectTexture;
+    QPixmap dizzyEffectTexture;
 };
 
 #endif // TEXTURELOADER_H

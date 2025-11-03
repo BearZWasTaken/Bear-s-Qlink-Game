@@ -36,8 +36,12 @@ public:
     int remaining_blocks;
     int timeLeftMs;
 
-    int hintTimeLeftMs;
+    int hintTimeLeftMs = 0;
+    int dizzyTimeLeftMs = 0;
+    int freezeTimeLeftMs = 0;
     Coord hintBlock1, hintBlock2;
+
+    GameBoard *opponent_board = nullptr;
 
 private:
     struct LinkHint

@@ -18,7 +18,8 @@
 #include <iostream>
 #include <queue>
 
-GameBoard::GameBoard(QObject *parent) : QObject(parent)
+GameBoard::GameBoard(QObject *parent)
+    : QObject(parent)
 {
     player = new Player(this);
 }
@@ -75,6 +76,8 @@ QJsonObject GameBoard::SaveMap(QString mapName)
 
     jsonObject.insert("timeLeftMs", timeLeftMs);
     jsonObject.insert("hintTimeLeftMs", hintTimeLeftMs);
+    jsonObject.insert("freezeTimeLeftMs", freezeTimeLeftMs);
+    jsonObject.insert("dizzyTimeLeftMs", dizzyTimeLeftMs);
 
     return jsonObject;
 }
@@ -96,6 +99,8 @@ void GameBoard::LoadMap(const QJsonObject jsonObject)
 
     timeLeftMs = jsonObject["timeLeftMs"].toInt();
     hintTimeLeftMs = jsonObject["hintTimeLeftMs"].toInt();
+    freezeTimeLeftMs = jsonObject["freezeTimeLeftMs"].toInt();
+    dizzyTimeLeftMs = jsonObject["dizzyTimeLeftMs"].toInt();
 
     QJsonArray boardArr = jsonObject["board"].toArray();
     for (int i=1; i<=board_height; i++)
@@ -442,6 +447,18 @@ void GameBoard::TriggerProp(const int x, const int y)
         {
             hintTimeLeftMs = 10000;
             RefreshHint();
+            break;
+        }
+
+        case PROP_FREEZE:
+        {
+            opponent_board->freezeTimeLeftMs = 3000;
+            break;
+        }
+
+        case PROP_DIZZY:
+        {
+            opponent_board->dizzyTimeLeftMs = 10000;
             break;
         }
     }

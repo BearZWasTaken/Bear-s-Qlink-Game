@@ -98,9 +98,9 @@ SelectMapPage::SelectMapPage(QWidget *parent, TextureLoader *textureLoader)
             color: white;
             background-color: rgba(0,0,0,0.5);
             border-radius: 15px;
-            font: 18pt "Comic Sans MS";
+            font: 16pt "Comic Sans MS";
             padding: 12px 30px;
-            min-width: 200px;
+            min-width: 170px;
         }
         QPushButton:hover {
             background-color: rgba(0,0,0,0.3);

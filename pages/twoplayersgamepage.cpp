@@ -371,6 +371,8 @@ void TwoPlayersGamePage::NewGame(const GameSettings &settings)
     }
     boards[0] = new GameBoard(this);
     boards[1] = new GameBoard(this);
+    boards[0]->opponent_board = boards[1];
+    boards[1]->opponent_board = boards[0];
 
     connect(boards[0], &GameBoard::LinkSuccessSignal, this, [this](const std::vector<Coord> &path) {
         this->DrawPath(0, path);
@@ -411,6 +413,8 @@ void TwoPlayersGamePage::LoadGame(const QString &mapName)
     }
     boards[0] = new GameBoard(this);
     boards[1] = new GameBoard(this);
+    boards[0]->opponent_board = boards[1];
+    boards[1]->opponent_board = boards[0];
 
     connect(boards[0], &GameBoard::LinkSuccessSignal, this, [this](const std::vector<Coord> &path) {
         this->DrawPath(0, path);
@@ -460,35 +464,51 @@ void TwoPlayersGamePage::keyPressEvent(QKeyEvent *event)
     switch (event->key())
     {
     case Qt::Key_S:
-        player1->Move(DOWN);
+        if (boards[0]->freezeTimeLeftMs > 0) break;
+        if (boards[0]->dizzyTimeLeftMs > 0) player1->Move(UP);
+        else player1->Move(DOWN);
         break;
 
     case Qt::Key_A:
-        player1->Move(LEFT);
+        if (boards[0]->freezeTimeLeftMs > 0) break;
+        if (boards[0]->dizzyTimeLeftMs > 0) player1->Move(RIGHT);
+        else player1->Move(LEFT);
         break;
 
     case Qt::Key_D:
-        player1->Move(RIGHT);
+        if (boards[0]->freezeTimeLeftMs > 0) break;
+        if (boards[0]->dizzyTimeLeftMs > 0) player1->Move(LEFT);
+        else player1->Move(RIGHT);
         break;
 
     case Qt::Key_W:
-        player1->Move(UP);
+        if (boards[0]->freezeTimeLeftMs > 0) break;
+        if (boards[0]->dizzyTimeLeftMs > 0) player1->Move(DOWN);
+        else player1->Move(UP);
         break;
 
     case Qt::Key_Down:
-        player2->Move(DOWN);
+        if (boards[1]->freezeTimeLeftMs > 0) break;
+        if (boards[1]->dizzyTimeLeftMs > 0) player2->Move(UP);
+        else player2->Move(DOWN);
         break;
 
     case Qt::Key_Left:
-        player2->Move(LEFT);
+        if (boards[1]->freezeTimeLeftMs > 0) break;
+        if (boards[1]->dizzyTimeLeftMs > 0) player2->Move(RIGHT);
+        else player2->Move(LEFT);
         break;
 
     case Qt::Key_Right:
-        player2->Move(RIGHT);
+        if (boards[1]->freezeTimeLeftMs > 0) break;
+        if (boards[1]->dizzyTimeLeftMs > 0) player2->Move(LEFT);
+        else player2->Move(RIGHT);
         break;
 
     case Qt::Key_Up:
-        player2->Move(UP);
+        if (boards[1]->freezeTimeLeftMs > 0) break;
+        if (boards[1]->dizzyTimeLeftMs > 0) player2->Move(DOWN);
+        else player2->Move(UP);
         break;
 
     case Qt::Key_Escape: case Qt::Key_Delete:
@@ -652,6 +672,32 @@ void TwoPlayersGamePage::LoadMisc()
             item2->setZValue(1);
             item2->setPos((b->hintBlock2.x - 1) * (cellSize + spacing), (b->hintBlock2.y - 1) * (cellSize + spacing));
         }
+
+        // freeze
+        if (b->freezeTimeLeftMs > 0)
+        {
+            QPixmap scaledPixmap1 = textureLoader->freezeEffectTexture.scaled(
+                cellSize, cellSize,
+                Qt::IgnoreAspectRatio,
+                Qt::SmoothTransformation
+                );
+            QGraphicsPixmapItem *item1 = scene->addPixmap(scaledPixmap1);
+            item1->setZValue(1);
+            item1->setPos((player->x - 1) * (cellSize + spacing), (player->y - 1) * (cellSize + spacing));
+        }
+
+        // dizzy
+        if (b->dizzyTimeLeftMs > 0)
+        {
+            QPixmap scaledPixmap1 = textureLoader->dizzyEffectTexture.scaled(
+                cellSize, cellSize,
+                Qt::IgnoreAspectRatio,
+                Qt::SmoothTransformation
+                );
+            QGraphicsPixmapItem *item1 = scene->addPixmap(scaledPixmap1);
+            item1->setZValue(1);
+            item1->setPos((player->x - 1) * (cellSize + spacing), (player->y - 1) * (cellSize + spacing));
+        }
     }
 
     UpdateBlocksLeft();
@@ -737,6 +783,16 @@ void TwoPlayersGamePage::UpdateTimer()
             boards[0]->hintTimeLeftMs -= 100;
         if (boards[1]->hintTimeLeftMs > 0)
             boards[1]->hintTimeLeftMs -= 100;
+
+        if (boards[0]->freezeTimeLeftMs > 0)
+            boards[0]->freezeTimeLeftMs -= 100;
+        if (boards[1]->freezeTimeLeftMs > 0)
+            boards[1]->freezeTimeLeftMs -= 100;
+
+        if (boards[0]->dizzyTimeLeftMs > 0)
+            boards[0]->dizzyTimeLeftMs -= 100;
+        if (boards[1]->dizzyTimeLeftMs > 0)
+            boards[1]->dizzyTimeLeftMs -= 100;
     }
     else
     {

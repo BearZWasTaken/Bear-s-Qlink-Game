@@ -102,6 +102,8 @@ void TextureLoader::LoadMisc(const QString &dirPath)
 {
     selectTexture = QPixmap(dirPath + "/select.png");
     hintSignTexture = QPixmap(dirPath + "/hint.png");
+    freezeEffectTexture = QPixmap(dirPath + "/freeze_effect.png");
+    dizzyEffectTexture = QPixmap(dirPath + "/dizzy_effect.png");
     qDebug() << "Loaded misc texture";
 }
 
