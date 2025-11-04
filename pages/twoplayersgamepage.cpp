@@ -616,7 +616,7 @@ void TwoPlayersGamePage::LoadPlayers()
         Player *player = b->player;
         if (!player) continue;
 
-        QPixmap scaledPixmap = textureLoader->players[2].texture[player->direction][player->appearance_index].scaled(
+        QPixmap scaledPixmap = textureLoader->players[2-2*i].texture[player->direction][player->appearance_index].scaled(
             cellSize, cellSize,
             Qt::IgnoreAspectRatio,
             Qt::SmoothTransformation

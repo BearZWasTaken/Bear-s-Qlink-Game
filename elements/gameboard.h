@@ -63,7 +63,9 @@ public:
     bool hasBlock(const Coord coord);
     bool hasProp(const int x, const int y);
     bool outOfBoard(const int x, const int y);
+
     void TryLink(const int x1, const int y1, const int x2, const int y2);
+    bool canLink(const int x, const int y, const int dest_x, const int dest_y, std::vector<Coord> &shortest_path);
 
     void TriggerProp(const int x, const int y);
 
@@ -80,7 +82,6 @@ private:
     void SpawnBlocks();
     void SpawnProps();
 
-    bool canLink(const int x, const int y, const int dest_x, const int dest_y, std::vector<Coord> &shortest_path);
     bool canLinkFromBlank(const int x, const int y, const int dest_x, const int dest_y, Direction direc, std::vector<Coord> &path);
 
     void CalcLinkableTargets();
